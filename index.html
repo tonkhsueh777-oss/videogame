@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#050506">
+  <title>剑影 · 互动剧情</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main id="app" class="app-shell" aria-label="武侠互动影片">
+    <section id="stage" class="stage">
+      <video
+        id="scene-video"
+        class="scene-video"
+        playsinline
+        webkit-playsinline
+        preload="auto"
+        disablepictureinpicture
+        controlslist="nodownload noplaybackrate nofullscreen"
+      ></video>
+
+      <div class="cinematic-shade" aria-hidden="true"></div>
+      <div id="flash" class="sword-flash" aria-hidden="true"></div>
+
+      <section id="enter-screen" class="enter-screen overlay-visible" aria-label="开始游戏">
+        <button id="enter-button" class="enter-button" type="button">
+          <span class="enter-line" aria-hidden="true"></span>
+          <span>点击进入</span>
+          <span class="enter-line" aria-hidden="true"></span>
+        </button>
+        <p>建议开启声音 · 竖屏体验</p>
+      </section>
+
+      <section id="choices" class="choices" aria-hidden="true" aria-label="剧情选择">
+        <p class="choice-prompt">命运，由你决定</p>
+        <div id="choice-buttons" class="choice-buttons"></div>
+      </section>
+
+      <section id="ending-panel" class="ending-panel" aria-hidden="true">
+        <p class="ending-kicker">此局已定</p>
+        <h1 id="ending-title">结局</h1>
+        <div class="ending-actions">
+          <button id="restart-button" class="action-button primary" type="button">重新挑战</button>
+          <button id="back-button" class="action-button secondary" type="button">返回上一个选择</button>
+        </div>
+      </section>
+
+      <section id="error-panel" class="error-panel" aria-hidden="true" role="alert">
+        <p id="error-message">影片载入失败，请重新尝试。</p>
+        <button id="error-retry" class="action-button primary" type="button">重新载入</button>
+      </section>
+
+      <div id="rotate-hint" class="rotate-hint" aria-hidden="true">
+        <div class="rotate-phone" aria-hidden="true"></div>
+        <strong>请竖屏体验</strong>
+      </div>
+    </section>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>
