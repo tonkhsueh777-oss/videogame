@@ -98,8 +98,8 @@ button {
   align-items: center;
   padding: 0 7.5% max(12svh, calc(env(safe-area-inset-bottom) + 54px));
   background:
-    radial-gradient(circle at 50% 67%, rgba(142, 33, 20, 0.15), transparent 32%),
-    linear-gradient(to top, rgba(0, 0, 0, 0.78), transparent 56%);
+    linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent 32%),
+    url("./media/cover.jpeg") center / contain no-repeat #060607;
 }
 
 .enter-button {
