@@ -140,12 +140,12 @@ test('slow next clip keeps a real previous frame under loading', async ({ page }
   await expect(page.locator('#loading-panel')).toHaveAttribute('aria-hidden', 'true');
   await expect(page.locator('#frozen-frame')).not.toHaveClass(/frame-visible/);
 });
-test('next-layer metadata excludes unrelated endings and all controls stay in combat area', async ({ page }) => {
+test('only the active branch downloads and controls stay in combat area', async ({ page }) => {
   const files = new Set();
   page.on('request', r => { if (r.url().includes('.mp4')) files.add(r.url().split('/').pop()); });
   await start(page);
-  await expect.poll(() => files.size).toBe(3);
-  expect([...files].sort()).toEqual(['01_intro.mp4', '02A_fight.mp4', '02B_escape.mp4']);
+  await expect.poll(() => files.size).toBe(1);
+  expect([...files].sort()).toEqual(['01_intro.mp4']);
   await qte(page);
   const bounds = await page.locator('#stage').boundingBox();
   for (const b of await page.locator('.combat-action').all()) {
@@ -154,8 +154,8 @@ test('next-layer metadata excludes unrelated endings and all controls stay in co
     expect((rect.y + rect.height - bounds.y) / bounds.height).toBeLessThan(.73);
   }
   await page.locator('[data-choice="fight"]').click();
-  await expect.poll(() => files.size).toBe(5);
-  expect([...files].sort()).toEqual(['01_intro.mp4', '02A_fight.mp4', '02B_escape.mp4', '03A1_core.mp4', '03A2_chain.mp4']);
+  await expect.poll(() => files.size).toBe(2);
+  expect([...files].sort()).toEqual(['01_intro.mp4', '02A_fight.mp4']);
   expect(await page.locator('video').count()).toBe(1);
 });
 test('landscape hint disappears when portrait returns', async ({ page }) => {

@@ -37,9 +37,6 @@
   let holdFrame = 0;
   let effectUntil = 0;
   let audioContext;
-  let metadataProbe = null;
-  let warmedGeneration = -1;
-  const warmed = new Set();
 
   function visible(element, show) {
     element.classList.toggle('overlay-visible', show);
@@ -141,40 +138,10 @@
     $('error-restart').hidden = state.failures < 2;
     visible($('error-panel'), true);
   }
-  function stopProbe() {
-    if (!metadataProbe) return;
-    metadataProbe.onloadedmetadata = metadataProbe.onerror = null;
-    metadataProbe.removeAttribute('src');
-    metadataProbe.load();
-    metadataProbe = null;
-  }
   function warmNextLayer() {
-    if (warmedGeneration === state.generation || video.currentTime < .5 || video.paused || state.loading) return;
-    warmedGeneration = state.generation;
-    if (navigator.connection?.saveData) return;
-    const generation = state.generation;
-    const queue = node().choices.map(choice => STORY[choice.next].src).filter(src => !warmed.has(src));
-    function next() {
-      if (generation !== state.generation || !queue.length) return;
-      const src = queue.shift();
-      // One temporary, silent metadata probe at a time, never seven video players.
-      const probe = document.createElement('video');
-      metadataProbe = probe;
-      probe.preload = 'metadata';
-      probe.muted = true;
-      probe.playsInline = true;
-      const complete = () => {
-        if (metadataProbe !== probe) return;
-        warmed.add(src);
-        stopProbe();
-        next();
-      };
-      probe.onloadedmetadata = complete;
-      probe.onerror = complete;
-      probe.src = src;
-      probe.load();
-    }
-    next();
+    // Do not create temporary video elements here. GitHub Pages and some
+    // mobile CDNs answer a metadata Range request with the entire MP4,
+    // causing a full duplicate download before the real branch starts.
   }
   function activate(id, { retry = false, initial = false } = {}) {
     captureFrame();
@@ -187,7 +154,6 @@
     clearTimeout(watchdog);
     clearTimeout(feedbackTimer);
     if (frameCallback && video.cancelVideoFrameCallback) video.cancelVideoFrameCallback(frameCallback);
-    stopProbe();
     hideQte();
     visible($('ending-panel'), false);
     visible($('error-panel'), false);
@@ -341,6 +307,9 @@
   video.addEventListener('canplay', () => {
     // playing + an actual decoded frame, rather than canplay alone, removes the old frame.
     if (state.started && !state.error && !state.suspended) armWatchdog();
+    // Some iOS WebKit versions omit a useful requestVideoFrameCallback after
+    // a source swap. canplay is still enough to release the loading veil.
+    if (state.loading && !video.paused) frameReady();
   });
   video.addEventListener('playing', () => {
     if (state.error || state.suspended) return;
