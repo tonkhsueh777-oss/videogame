@@ -1,0 +1,11 @@
+{
+  "name": "jianying-mobile-video",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "serve": "node tests/server.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

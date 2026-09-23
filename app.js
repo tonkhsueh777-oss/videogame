@@ -37,6 +37,8 @@
   let holdFrame = 0;
   let effectUntil = 0;
   let audioContext;
+  let lastPlaybackTime = -1;
+  let retryPosition = 0;
 
   function visible(element, show) {
     element.classList.toggle('overlay-visible', show);
@@ -95,10 +97,21 @@
     if (!state.started || state.error || state.suspended || document.hidden) return;
     const generation = state.generation;
     watchdog = setTimeout(() => {
-      if (generation === state.generation && !video.ended) fail('影片载入失败，请检查网络后重新载入。');
+      if (generation !== state.generation || video.ended || !state.loading) return;
+      // A slow transfer is not a media failure. Keep the request and buffered
+      // bytes alive; only an explicit reconnect button replaces the source.
+      $('loading-message').textContent = navigator.onLine
+        ? '网络较慢，正在继续缓冲…'
+        : '网络已断开，连接恢复后将继续…';
+      $('loading-retry').hidden = false;
     }, 20000);
   }
   function loading(show) {
+    if (show && !state.loading) {
+      $('loading-message').textContent = '命运正在改变……';
+      $('loading-retry').hidden = true;
+      $('loading-progress').removeAttribute('value');
+    }
     state.loading = show;
     visible($('loading-panel'), show);
     if (show) { resetGesture(); visible(layer, false); state.qte = false; armWatchdog(); }
@@ -114,6 +127,7 @@
     const generation = state.generation;
     state.suspended = false;
     visible($('continue-panel'), false);
+    armWatchdog();
     // Must be invoked synchronously from enter / retry / continue user events.
     try {
       const pending = video.play();
@@ -134,16 +148,14 @@
     hideQte();
     loading(false);
     visible($('continue-panel'), false);
+    $('combat-result').hidden = true;
     $('error-message').textContent = message;
     $('error-restart').hidden = state.failures < 2;
     visible($('error-panel'), true);
   }
-  function warmNextLayer() {
-    // Do not create temporary video elements here. GitHub Pages and some
-    // mobile CDNs answer a metadata Range request with the entire MP4,
-    // causing a full duplicate download before the real branch starts.
-  }
-  function activate(id, { retry = false, initial = false } = {}) {
+  function activate(id, { retry = false, initial = false, feedback = '' } = {}) {
+    retryPosition = retry && id === state.id ? Math.max(retryPosition, video.currentTime) : 0;
+    lastPlaybackTime = -1;
     captureFrame();
     state.generation += 1;
     state.id = id;
@@ -158,6 +170,9 @@
     visible($('ending-panel'), false);
     visible($('error-panel'), false);
     visible($('continue-panel'), false);
+    $('combat-result').textContent = feedback;
+    $('combat-result').hidden = !feedback;
+    state.loading = false; // Every new request gets fresh, initially hidden recovery controls.
     loading(true);
     if (!initial) {
       video.pause();
@@ -174,6 +189,7 @@
       if (generation !== state.generation || state.error || state.suspended || video.paused) return;
       frozen.classList.remove('frame-visible');
       stage.removeAttribute('data-effect');
+      $('combat-result').hidden = true;
       loading(false);
       state.locked = false;
       checkQte();
@@ -207,7 +223,8 @@
     if (choice.effect === 'parry') metallicClash();
     try { navigator.vibrate?.(choice.hold ? 25 : 12); } catch { /* Optional feedback. */ }
     state.history.push(state.id);
-    activate(choice.next);
+    const feedback = { fight: '招架成功', escape: '闪避成功', core: '直刺核心', chain: '挥剑斩链', seal: '封印已启动', bridge: '冲向吊桥' };
+    activate(choice.next, { feedback: feedback[choice.id] });
   }
   function resizeTrail() {
     const rect = stage.getBoundingClientRect();
@@ -305,8 +322,23 @@
     activate(state.history.pop());
   });
   $('error-retry').addEventListener('click', () => { if (state.error) activate(state.id, { retry: true }); });
+  $('loading-retry').addEventListener('click', () => {
+    if (state.loading && !$('loading-retry').hidden) activate(state.id, { retry: true });
+  });
   $('continue-button').addEventListener('click', () => { loading(true); playCurrent(); });
-  video.addEventListener('loadedmetadata', () => { if (state.started && !state.error) armWatchdog(); });
+  video.addEventListener('loadedmetadata', () => {
+    if (retryPosition > 0 && retryPosition < video.duration) {
+      video.currentTime = retryPosition;
+      retryPosition = 0;
+    }
+    if (state.started && !state.error) armWatchdog();
+  });
+  video.addEventListener('progress', () => {
+    if (!state.loading || !Number.isFinite(video.duration) || !video.buffered.length) return;
+    // This is playable buffer coverage, not a claim about total downloaded bytes.
+    const end = video.buffered.end(video.buffered.length - 1);
+    $('loading-progress').value = Math.min(100, end / video.duration * 100);
+  });
   video.addEventListener('canplay', () => {
     // playing + an actual decoded frame, rather than canplay alone, removes the old frame.
     if (state.started && !state.error && !state.suspended) armWatchdog();
@@ -324,12 +356,12 @@
   });
   video.addEventListener('timeupdate', () => {
     if (!state.started || state.error || state.suspended) return;
-    if (!video.paused) {
+    if (!video.paused && video.currentTime > lastPlaybackTime + .02) {
+      lastPlaybackTime = video.currentTime;
       armWatchdog();
-      warmNextLayer();
       // WebKit can omit requestVideoFrameCallback after a source swap. Keep
       // the QTE state machine moving once a decoded frame is demonstrably playing.
-      if (state.locked && video.readyState >= 2 && performance.now() >= effectUntil) frameReady();
+      if ((state.locked || state.loading) && video.readyState >= 2 && performance.now() >= effectUntil) frameReady();
     }
     checkQte();
   });
@@ -342,7 +374,19 @@
     if (!state.started || state.error || state.suspended || video.ended) return;
     if (video.readyState < 3) { captureFrame(); loading(true); }
   });
-  video.addEventListener('error', () => { if (state.started) fail('影片载入失败，请重新载入。'); });
+  video.addEventListener('error', () => {
+    if (!state.started) return;
+    const messages = {
+      1: '影片播放已中断，请重新载入当前影片。',
+      2: '网络连接中断，请重新载入当前影片。',
+      3: '影片解码失败，请重新载入或换浏览器打开。',
+      4: '影片地址无法访问或浏览器不支持此格式，请重新载入。',
+    };
+    fail(messages[video.error?.code] || '影片载入失败，请重新载入。');
+  });
+  window.addEventListener('online', () => {
+    if (state.started && state.loading && !state.error && !state.suspended) playCurrent();
+  });
   video.addEventListener('ended', () => {
     if (state.error || state.suspended) return;
     clearTimeout(watchdog);

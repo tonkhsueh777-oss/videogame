@@ -286,6 +286,8 @@ button {
 .loading-panel, .continue-panel { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; opacity: 0; visibility: hidden; pointer-events: none; background: linear-gradient(transparent 20%, #05050588 70%); transition: opacity 120ms ease; }
 .loading-panel.overlay-visible, .continue-panel.overlay-visible { opacity: 1; visibility: visible; pointer-events: auto; }
 .loading-panel p { font-size: 13px; letter-spacing: .18em; text-shadow: 0 2px 8px #000; }
+.loading-panel progress { width: 42%; height: 3px; accent-color: #d5b57c; }
+.loading-panel .action-button { width: 68%; margin-top: 10px; }
 .loading-sigil { color: #e5c79b; font: 30px 'STKaiti','KaiTi',serif; animation: qte-pulse 1s ease-in-out infinite; }
 .continue-panel .action-button { width: 70%; }
 .error-panel { z-index: 12; }
@@ -294,13 +296,14 @@ button {
 .action-button.secondary { min-height: 44px; font-size: 12px; color: #c3b7a3; background: #08080870; }
 .combat-flash, .impact-slash, .seal-wave { position: absolute; z-index: 11; pointer-events: none; opacity: 0; }
 .combat-flash { inset: 0; background: radial-gradient(ellipse at 50% 60%, #fff7dabc, transparent 65%); }
+.combat-result { position: absolute; top: 43%; left: 0; right: 0; z-index: 11; text-align: center; pointer-events: none; color: #ffe8af; font: 23px 'STKaiti', 'KaiTi', serif; letter-spacing: .16em; text-shadow: 0 2px 12px #000; }
 .impact-slash { left: 12%; top: 61%; width: 76%; height: 3px; background: linear-gradient(90deg, transparent, #fff5d5, white, transparent); box-shadow: 0 0 14px #ffdb93; --slash-angle: 0deg; }
 .seal-wave { left: 50%; top: 62%; width: 80px; height: 80px; margin: -40px; border: 2px solid #f3cf87; border-radius: 50%; box-shadow: 0 0 20px #f3cf8755, inset 0 0 20px #f3cf8755; }
 [data-effect='parry'] .combat-flash { animation: parry-flash 220ms ease-out; }
 [data-effect='parry'] .scene-video, [data-effect='parry'] .frozen-frame { animation: impact-shake 220ms ease-out; }
 [data-effect='parry'] .impact-slash, [data-effect='thrust'] .impact-slash, [data-effect='slash'] .impact-slash { animation: slash-strike 220ms ease-out; }
-[data-effect='thrust'] .impact-slash { --slash-angle: -90deg; }
-[data-effect='slash'] .impact-slash { --slash-angle: 45deg; }
+[data-effect='thrust'] .impact-slash { --slash-angle: -90deg; left: 50%; top: 72%; width: 65%; transform-origin: left center; }
+[data-effect='slash'] .impact-slash { --slash-angle: 45deg; left: 25%; top: 47%; width: 72%; transform-origin: left center; }
 [data-effect='dodge'] .combat-flash { background: linear-gradient(90deg, transparent 10%, #fff8 45%, transparent 85%); animation: dodge-flash 200ms ease-out; }
 [data-effect='dodge'] .frozen-frame { animation: dodge-frame 200ms ease-out; }
 [data-effect='dodge'] .combat-zone { animation: dodge-ui 200ms ease-out; }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#050506">
   <title>剑影魔踪 · 互动影片</title>
-  <link rel="stylesheet" href="./styles.css?v=qte-2">
+  <link rel="stylesheet" href="./styles.css?v=mobile-stream-4">
 </head>
 <body>
   <main id="app" class="app-shell" aria-label="武侠互动影片">
@@ -25,6 +25,7 @@
       <div class="combat-flash" aria-hidden="true"></div>
       <div class="impact-slash" aria-hidden="true"></div>
       <div class="seal-wave" aria-hidden="true"></div>
+      <p id="combat-result" class="combat-result" role="status" hidden></p>
 
       <section id="enter-screen" class="enter-screen overlay-visible" aria-label="开始游戏">
         <h1>剑影魔踪</h1>
@@ -55,7 +56,12 @@
         </div>
       </section>
 
-      <section id="loading-panel" class="loading-panel" aria-hidden="true" role="status" aria-live="polite"><span class="loading-sigil" aria-hidden="true">剑</span><p>命运正在改变……</p></section>
+      <section id="loading-panel" class="loading-panel" aria-hidden="true" role="status" aria-live="polite">
+        <span class="loading-sigil" aria-hidden="true">剑</span>
+        <p id="loading-message">命运正在改变……</p>
+        <progress id="loading-progress" max="100" aria-label="影片缓冲进度"></progress>
+        <button id="loading-retry" class="action-button secondary" type="button" hidden>重新连接当前影片</button>
+      </section>
       <section id="continue-panel" class="continue-panel" aria-hidden="true"><button id="continue-button" class="action-button primary" type="button">点击继续播放</button></section>
 
       <section id="error-panel" class="error-panel" aria-hidden="true" role="alert">
@@ -70,6 +76,6 @@
       </div>
     </section>
   </main>
-  <script src="./app.js?v=qte-2"></script>
+  <script src="./app.js?v=mobile-stream-4"></script>
 </body>
 </html>
