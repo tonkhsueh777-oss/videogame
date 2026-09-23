@@ -170,14 +170,17 @@
     if (state.error || state.suspended || video.readyState < 2 || video.paused) return;
     const generation = state.generation;
     clearTimeout(feedbackTimer);
-    feedbackTimer = setTimeout(() => {
+    const release = () => {
       if (generation !== state.generation || state.error || state.suspended || video.paused) return;
       frozen.classList.remove('frame-visible');
       stage.removeAttribute('data-effect');
       loading(false);
       state.locked = false;
       checkQte();
-    }, Math.max(0, effectUntil - performance.now()));
+    };
+    const delay = Math.max(0, effectUntil - performance.now());
+    if (delay === 0) release();
+    else feedbackTimer = setTimeout(release, delay);
   }
   function metallicClash() {
     if (!audioContext || audioContext.state !== 'running') return;
@@ -324,6 +327,9 @@
     if (!video.paused) {
       armWatchdog();
       warmNextLayer();
+      // WebKit can omit requestVideoFrameCallback after a source swap. Keep
+      // the QTE state machine moving once a decoded frame is demonstrably playing.
+      if (state.locked && video.readyState >= 2 && performance.now() >= effectUntil) frameReady();
     }
     checkQte();
   });
