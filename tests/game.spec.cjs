@@ -18,6 +18,11 @@ test('first visit requests only intro, with no autoplay', async ({ page }) => {
   expect([...files]).toEqual(['01_intro.mp4']);
   expect(await page.locator('#scene-video').evaluate(v => v.paused)).toBe(true);
 });
+test('QTE appears during natural playback before the clip ends', async ({ page }) => {
+  await start(page);
+  await expect(page.locator('#choices')).toHaveAttribute('aria-hidden', 'false', { timeout: 7000 });
+  await expect(page.locator('#choice-prompt')).toHaveText('敌袭！');
+});
 for (const [first, second, title, file] of [
   ['fight', 'core', '破魔', '03A1_core.mp4'], ['fight', 'chain', '借势', '03A2_chain.mp4'],
   ['escape', 'seal', '封魔', '03B1_seal.mp4'], ['escape', 'bridge', '断桥', '03B2_bridge.mp4'],
